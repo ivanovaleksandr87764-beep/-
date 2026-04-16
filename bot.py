@@ -7,6 +7,7 @@ from aiogram.types import (
 )
 from aiogram.filters import CommandStart
 from aiogram.enums import ParseMode
+from aiogram.client.default import DefaultBotProperties
 
 # ─────────────────────────────────────────
 #  НАСТРОЙКИ
@@ -29,7 +30,7 @@ VIDEO_CAPTION = "🎁 Держи! Вот твой материал. Добро �
 # ─────────────────────────────────────────
 
 logging.basicConfig(level=logging.INFO)
-bot = Bot(token=BOT_TOKEN, parse_mode=ParseMode.HTML)
+bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 dp  = Dispatcher()
 
 sent_to: set[int] = set()
