@@ -21,7 +21,7 @@ import texts as T
 # ─────────────────────────────────────────
 BOT_TOKEN     = os.environ["BOT_TOKEN"]
 ADMIN_IDS     = {int(x) for x in os.getenv("ADMIN_IDS", "911483520").replace(" ", "").split(",") if x}
-COURSE_URL    = os.getenv("COURSE_URL", "https://t.me/Ozarenieebot")
+COURSE_URL    = os.getenv("COURSE_URL", "https://artofsales.skillspace.ru/l/firststep4change-8f696a")
 VIDEO_FILE_ID = os.getenv("VIDEO_FILE_ID", "")
 VIDEO_URL     = os.getenv("VIDEO_URL", "https://youtu.be/0dQVfAvIMEk")
 VIDEO_URL_2   = os.getenv("VIDEO_URL_2", "https://youtu.be/F-nV2uugL6k")
