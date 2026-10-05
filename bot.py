@@ -23,8 +23,9 @@ BOT_TOKEN     = os.environ["BOT_TOKEN"]
 ADMIN_IDS     = {int(x) for x in os.getenv("ADMIN_IDS", "").replace(" ", "").split(",") if x}
 COURSE_URL    = os.getenv("COURSE_URL", "https://t.me/Ozarenieebot")
 VIDEO_FILE_ID = os.getenv("VIDEO_FILE_ID", "")
-VIDEO_URL     = os.getenv("VIDEO_URL", "")
-DB_PATH       = os.getenv("DB_PATH", "bot.db")
+VIDEO_URL     = os.getenv("VIDEO_URL", "https://youtu.be/0dQVfAvIMEk")
+VIDEO_URL_2   = os.getenv("VIDEO_URL_2", "https://youtu.be/F-nV2uugL6k")
+DB_PATH       = os.getenv("DB_PATH", "/data/bot.db" if os.path.isdir("/data") else "bot.db")
 
 HOUR, DAY = 3600, 86400
 # Через сколько секунд после остановки на этапе слать очередное напоминание.
@@ -364,7 +365,7 @@ async def pinger():
                     continue
                 markup = {"start": start_kb(), "video": book_kb()}.get(u["stage"], continue_kb())
                 try:
-                    await bot.send_message(u["id"], msgs[step], reply_markup=markup)
+                    await bot.send_message(u["id"], msgs[step].format(video2=VIDEO_URL_2), reply_markup=markup)
                 except TelegramForbiddenError:
                     db.execute("UPDATE users SET blocked = 1, next_ping_at = NULL WHERE id = ?", (u["id"],))
                     continue
