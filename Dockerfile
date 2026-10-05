@@ -1,5 +1,6 @@
 FROM python:3.11-slim
 WORKDIR /app
-RUN pip install --no-cache-dir aiogram==3.15.0
-COPY bot.py .
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY bot.py texts.py ./
 CMD ["python", "bot.py"]
