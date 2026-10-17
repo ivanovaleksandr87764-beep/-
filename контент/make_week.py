@@ -6,10 +6,10 @@
   * текст Helvetica Neue Medium 50, белый, мягкая тень, по центру, виден с первого кадра;
     «||» — новый абзац (пустая строка), «|» — новая строка, цифры не отрываются от слова;
   * ник @markovvv2 весь ролик сверху (y≈300), 40;
-  * последние 3 с, тем же шрифтом, без плашки: «Пиши ХОЧУ» 80, «→ @markovvv2» 66,
+  * последние 2,5 с, тем же шрифтом, без плашки: «Пиши ХОЧУ» 80, «→ @markovvv2» 66,
     «расскажу, как забрать деньги от б@нков» 44 в 2 строки;
   * энергичная музыка из «музыка», громкость выровнена, затухание в конце;
-  * 1080×1920, 30 fps, H.264 + AAC, 9–12 с.
+  * 1080×1920, 30 fps, H.264 + AAC, 6–8 с (короче — больше досматривают до «ХОЧУ»).
 
   python3 make_week.py            # все 21
   python3 make_week.py --only 3,7 # только эти
@@ -37,7 +37,7 @@ FONT_SIZE, NICK_SIZE = 50, 40
 OUTLINE, GLOW_BLUR = 2, 4         # мягкая полупрозрачная тень вокруг букв (make_videos.py)
 NICK = "@markovvv2"
 NICK_Y = 300
-PLATE_SEC = 3.0
+PLATE_SEC = 2.5
 NBSP = " "
 
 # (файл, индекс в .ttc, имя для libass). На Mac — Helvetica Neue Medium, на Linux — её клон FreeSans.
@@ -224,7 +224,8 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 
 def text_sec(text):
     words = len(text.replace("||", " ").replace("|", " ").split())
-    return round(min(9.0, max(6.0, 2.5 + words * 0.32)), 1)
+    # коротко, чтобы до «ХОЧУ» досматривали; ~4 слова в секунду + время «зацепиться»
+    return round(min(5.5, max(3.5, 1.5 + words * 0.25)), 1)
 
 
 # ---------- рендер ----------
