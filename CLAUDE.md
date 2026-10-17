@@ -41,9 +41,10 @@
 
 ## Публикация через Metricool (когда пользователь просит)
 
-Бренд `tg.markovrko` (blogId 7424563), часовой пояс Europe/Moscow, сети TikTok + YouTube Shorts.
+Бренд `tg.markovrko` (blogId 7424563), часовой пояс Europe/Moscow, сети TikTok + YouTube Shorts + Instagram Reels.
 По 3 ролика в день в 10:00, 15:00, 18:00 по порядку номеров. Видео — ссылка на файл в Google Drive
 (`https://drive.google.com/file/d/<id>/view`), Metricool сам его забирает. Текст поста:
 `<название>\n<описание>`; `tiktokData.title` и `youtubeData.title` = название, YouTube `type: short`,
-`madeForKids: false`, теги `рко, заработок, подработка, студент, деньги`. Перед постановкой проверить
+`madeForKids: false`, теги `рко, заработок, подработка, студент, деньги`; Instagram —
+`instagramData: {type: "REEL", showReelOnFeed: true}`. Перед постановкой проверить
 `getScheduledPosts`, чтобы не задвоить.
