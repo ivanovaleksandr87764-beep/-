@@ -6,26 +6,25 @@ ffmpeg), оформление как у v3 из «5_единичек», но:
   * текст ≥ 90 px, белый с чёрной обводкой, ≤ 2 строк на экране;
   * ник @markovvv2 ~60 px вверху по центру весь ролик;
   * последние 3 с — белая плашка «Пиши ХОЧУ → @markovvv2», чёрный текст;
-  * весь текст выше 80 % высоты и левее 85 % ширины (кнопки TikTok).
+  * весь текст выше 80 % высоты и левее 85 % ширины (кнопки TikTok);
+  * фон — только ролики из «фоны», на весь экран, без эффектов; текст стоит на месте.
 
   python3 make_week.py            # все 21
   python3 make_week.py --only 3,7 # только эти
 """
 import argparse
 import json
-import math
 import random
 import re
 import subprocess
 import tempfile
 from pathlib import Path
 
-from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageFont
+from PIL import Image, ImageDraw, ImageFont
 
 ROOT = Path(__file__).resolve().parent
 BG_DIR = ROOT / "фоны"
 MUS_DIR = ROOT / "музыка"
-GEN_DIR = BG_DIR / "_сгенерированные"
 OUT_DIR = ROOT / "неделя_19-25"
 
 W, H = 1080, 1920
@@ -33,13 +32,13 @@ FPS = 30
 # Безопасная зона: ничего правее 85 % ширины и ниже 80 % высоты.
 SAFE_RIGHT = int(W * 0.85)          # 918
 SAFE_BOTTOM = int(H * 0.80)         # 1536
-SAFE_LEFT = 50                      # слева кнопок нет — поле уже
+SAFE_LEFT = 40                      # слева кнопок нет — поле уже
 TEXT_CX = (SAFE_LEFT + SAFE_RIGHT) // 2
 MAX_TEXT_W = SAFE_RIGHT - SAFE_LEFT
 TEXT_CY = 900                       # центр блока текста
 
 FONT_SIZE, FONT_MIN = 96, 90
-OUTLINE = 7
+OUTLINE = 6
 LINE_SPACING = 1.12
 NICK = "@markovvv2"
 NICK_SIZE, NICK_Y = 60, 300
@@ -62,30 +61,30 @@ def font(size):
 
 # ---------- контент ----------
 
-# « / » — новый экран. На экране не больше 2 строк.
+# « / » — новый экран, « | » — перенос строки. На экране не больше 2 строк.
 TEXTS = [
-    "Смена в Пятёрочке: 2 500 ₽ / Бизнес-карты в 8 местах: / как неделя таких смен / Без вложений",
-    "Как заработать на РКО с нуля: / 1) пишешь мне / 2) ИП онлайн за 1-3 дня / 3) бизнес-карты за вечер"
-    " / 4) ждёшь месяц-полтора / 5) забираешь",
-    "Тебе 18+, пашешь больше всех, / а денег меньше всех? / Пока ты на смене, / другие забирают деньги за РКО",
-    "Курьер: 12 часов на ногах / за 3 000 ₽ / Бизнес-карты с телефона: / в разы больше",
-    "«РКО это развод» / Факты: / всё оформлено на тебя / доступ только у тебя / ты ничего не платишь",
-    "Ищешь нишу третий год? / Самый простой вход: РКО",
-    "Официант за эти деньги / работает 2 недели / Тут пара вечеров с телефона",
-    "Что нужно для РКО: / 18+, паспорт РФ, / без долгов, / не госслужащий / Всё",
-    "Открыл сам / и получил деньги / Позвал друзей: / за каждого ещё бонус",
-    "Кассир: месяц за кассой / РКО: пара вечеров с телефона",
-    "Почему деньги не сразу? / Выплата через месяц-полтора / Говорю как есть",
-    "Стипендия 3 000 ₽? / Вот как поднять больше / за пару вечеров",
-    "Завод: 5/2 с 8 до 17 / РКО: пара вечеров с телефона",
-    "ИП звучит страшно? / Онлайн, бесплатно, 1-3 дня / Подскажу каждый шаг",
-    "Почему платят за РКО: / б@нкам нужны клиенты с ИП / За каждого они платят / Часть твоя",
-    "Просят твои пароли и коды? / Беги / Я не прошу / Доступ только у тебя",
-    "Рефералка: 2к за друга / РКО на себя в 8 местах: / в разы больше",
-    "Друг сидит без денег? / Скинь ему это / За каждого друга бонус тебе",
-    "Нужно вкладываться? / Нет / Ни рубля",
-    "3 ошибки новичка в РКО: / 1) передать кому-то доступ / 2) ждать денег в тот же день / 3) идти с долгами",
-    "Откуда деньги за РКО? / Это рекламный бюджет б@нков / Они платят за нового клиента",
+    "Смена в | Пятёрочке: 2 500 ₽ / Бизнес-карты | в 8 местах: / как неделя | таких смен / Без вложений",
+    "Как заработать | на РКО с нуля: / 1) пишешь мне / 2) ИП онлайн | за 1-3 дня / 3) бизнес-карты | за вечер"
+    " / 4) ждёшь | месяц-полтора / 5) забираешь",
+    "Тебе 18+, пашешь | больше всех, / а денег | меньше всех? / Пока ты на смене, / другие забирают | деньги за РКО",
+    "Курьер: 12 часов | на ногах за 3 000 ₽ / Бизнес-карты | с телефона: / в разы больше",
+    "«РКО это развод». | Факты: / всё оформлено | на тебя / доступ | только у тебя / ты ничего | не платишь",
+    "Ищешь нишу | третий год? / Самый простой | вход: РКО",
+    "Официант | за эти деньги / работает 2 недели / Тут пара вечеров | с телефона",
+    "Что нужно | для РКО: / 18+, паспорт РФ, | без долгов, / не госслужащий. | Всё",
+    "Открыл сам | и получил деньги / Позвал друзей: / за каждого | ещё бонус",
+    "Кассир: | месяц за кассой / РКО: пара вечеров | с телефона",
+    "Почему деньги | не сразу? / Выплата через | месяц-полтора / Говорю как есть",
+    "Стипендия | 3 000 ₽? / Вот как поднять | больше / за пару вечеров",
+    "Завод: 5/2 | с 8 до 17 / РКО: пара вечеров | с телефона",
+    "ИП звучит | страшно? / Онлайн, | бесплатно, 1-3 дня / Подскажу | каждый шаг",
+    "Почему платят | за РКО: / б@нкам нужны | клиенты с ИП / За каждого | они платят / Часть твоя",
+    "Просят твои | пароли и коды? / Беги. | Я не прошу / Доступ | только у тебя",
+    "Рефералка: | 2к за друга / РКО на себя | в 8 местах: / в разы больше",
+    "Друг сидит | без денег? / Скинь ему это / За каждого друга | бонус тебе",
+    "Нужно | вкладываться? / Нет. | Ни рубля",
+    "3 ошибки | новичка в РКО: / 1) передать | кому-то доступ / 2) ждать денег | в тот же день / 3) идти с долгами",
+    "Откуда деньги | за РКО? / Это рекламный | бюджет б@нков / Они платят | за нового клиента",
 ]
 
 TITLES = [
@@ -116,8 +115,8 @@ DESC = ("Пиши «ХОЧУ» в ТГ: @markovvv2. Канал с гайдом: 
 
 BANNED = re.compile(r"банк|сч[её]т", re.I)
 
-# Фоны по кругу: POV-ходьба, ночной город, тёмный, стол с кофе.
-BG_CYCLE = ["pov", "ночной_город", "тёмный", "стол"]
+# Фоны по кругу (свои ролики из «фоны»): улица, ночной город, тёмный, деньги.
+BG_CYCLE = ["улица", "ночной_город", "тёмный", "деньги"]
 MUSIC = [
     "6866214859_1_tiktok_6a1cab7983bdf6_98223199.mp3",
     "905647610_1_tiktok_69cb0b12b6ff99_48043899.mp3",
@@ -177,36 +176,23 @@ def fits(lines, f):
     return len(lines) <= 2 and all(f.getlength(l) + 2 * OUTLINE <= MAX_TEXT_W for l in lines)
 
 
-def split_segment(seg, f):
-    """Кусок текста → экраны по ≤ 2 строки: если не влезает, режем по словам на равные части."""
-    words = glue(seg).split(" ")
-    for m in range(1, len(words) + 1):
-        parts, n = [], len(words)
-        bounds = [round(n * k / m) for k in range(m + 1)]
-        parts = [" ".join(words[a:b]) for a, b in zip(bounds, bounds[1:])]
-        wrapped = [balanced(p, f, MAX_TEXT_W - 2 * OUTLINE) for p in parts]
-        if all(fits(w, f) for w in wrapped):
-            return wrapped
-    raise SystemExit(f"Слово не влезает в ширину: {seg!r}")
-
-
 def layout_video(text):
-    """Один кегль на весь ролик: самый крупный (≤ 100, ≥ 90), при котором каждый « / »-кусок
-    укладывается не больше чем в 2 экрана. Возвращает (шрифт, [строки экрана, ...])."""
-    segs = [s.strip() for s in text.split(" / ") if s.strip()]
+    """Экраны и строки заданы вручную; кегль один на весь ролик — самый крупный (96…90),
+    при котором влезает каждая строка. Возвращает (шрифт, [строки экрана, ...])."""
+    screens = [[glue(l.strip()) for l in scr.split(" | ")] for scr in text.split(" / ") if scr.strip()]
     for size in range(FONT_SIZE, FONT_MIN - 1, -2):
         f = font(size)
-        screens = [scr for seg in segs for scr in split_segment(seg, f)]
-        if len(screens) <= len(segs) or size == FONT_MIN:
+        if all(fits(scr, f) for scr in screens):
             return f, screens
-    raise AssertionError
+    bad = [scr for scr in screens if not fits(scr, font(FONT_MIN))]
+    raise SystemExit(f"Не влезает при {FONT_MIN} px: {bad} — перенеси строку")
 
 
 # ---------- оверлеи (PNG с прозрачностью) ----------
 
 def draw_lines(d, f, lines, cx, cy, fill, stroke, spacing=LINE_SPACING):
     step = f.size * spacing
-    top = cy - step * len(lines) / 2
+    top = cy - step  # верх блока всегда на одном месте: текст не прыгает при 1 и 2 строках
     boxes = []
     for k, line in enumerate(lines):
         y = top + step * (k + 0.5)
@@ -271,131 +257,15 @@ def plate_layer(path):
 
 # ---------- фоны ----------
 
-def still_to_video(still, path, sec=16):
-    frames = sec * FPS
-    subprocess.run([
-        "ffmpeg", "-v", "error", "-y", "-loop", "1", "-i", str(still),
-        "-vf", f"scale=2160:3840,zoompan=z='1+0.10*on/{frames}':x='iw/2-iw/zoom/2':y='ih/2-ih/zoom/2'"
-               f":d={frames}:s={W}x{H}:fps={FPS},noise=alls=5:allf=t",
-        "-frames:v", str(frames), "-c:v", "libx264", "-crf", "20", "-pix_fmt", "yuv420p", str(path),
-    ], check=True)
-
-
-def make_dark(path):
-    """Тёмный фон: графит с мягким световым пятном."""
-    img = Image.new("RGB", (W, H))
-    px = img.load()
-    for y in range(H):
-        for x in range(0, W):
-            r = math.hypot((x - W * 0.5) / W, (y - H * 0.42) / H)
-            v = int(8 + 34 * max(0.0, 1 - r * 2.2))
-            px[x, y] = (v, v, v + 5)
-    img = img.filter(ImageFilter.GaussianBlur(3))
-    still = path.with_suffix(".png")
-    img.save(still)
-    still_to_video(still, path)
-
-
-def make_coffee_table(path):
-    """Стол с кофе сверху: деревянная столешница, чашка на блюдце, телефон, блокнот."""
-    rng = random.Random(7)
-    img = Image.new("RGB", (W, H), (92, 60, 38))
-    d = ImageDraw.Draw(img)
-    # доски
-    for bx in range(0, W, 270):
-        base = rng.randint(-10, 10)
-        for x in range(bx, min(bx + 270, W)):
-            for y in range(0, H, 3):
-                g = math.sin(y / rng.uniform(38, 42) + x / 9.0 + bx) * 9 + rng.uniform(-6, 6)
-                c = (int(128 + base + g * 1.6), int(82 + base * 0.7 + g * 1.1), int(48 + base * 0.5 + g * 0.7))
-                d.line((x, y, x, y + 2), fill=c)
-        d.line((bx, 0, bx, H), fill=(50, 32, 20), width=4)
-    img = img.filter(ImageFilter.GaussianBlur(1.5))
-    d = ImageDraw.Draw(img)
-    # телефон
-    d.rounded_rectangle((120, 1180, 480, 1900), 50, fill=(18, 18, 22))
-    d.rounded_rectangle((136, 1196, 464, 1884), 40, fill=(32, 38, 56))
-    # блокнот
-    d.rectangle((620, 1250, 1040, 1800), fill=(236, 232, 222))
-    for y in range(1310, 1780, 46):
-        d.line((650, y, 1010, y), fill=(190, 200, 215), width=3)
-    # тень и чашка на блюдце
-    shadow = Image.new("L", (W, H), 0)
-    ImageDraw.Draw(shadow).ellipse((300, 470, 860, 1030), fill=150)
-    shadow = shadow.filter(ImageFilter.GaussianBlur(40))
-    img.paste((20, 12, 8), (0, 0), shadow)
-    d = ImageDraw.Draw(img)
-    cx, cy = 560, 720
-    d.ellipse((cx - 270, cy - 270, cx + 270, cy + 270), fill=(240, 238, 234))
-    d.ellipse((cx - 230, cy - 230, cx + 230, cy + 230), fill=(225, 222, 216))
-    d.rounded_rectangle((cx + 165, cy - 45, cx + 300, cy + 45), 40, fill=(244, 242, 238))
-    d.ellipse((cx - 175, cy - 175, cx + 175, cy + 175), fill=(250, 249, 246))
-    d.ellipse((cx - 150, cy - 150, cx + 150, cy + 150), fill=(74, 42, 22))
-    d.ellipse((cx - 120, cy - 120, cx + 120, cy + 120), fill=(150, 98, 58))
-    d.ellipse((cx - 70, cy - 85, cx + 60, cy + 55), fill=(196, 150, 104))
-    img = img.filter(ImageFilter.GaussianBlur(1.0))
-    still = path.with_suffix(".png")
-    img.save(still)
-    still_to_video(still, path)
-
-
-def make_night_city(path):
-    """Ночной город: силуэты домов с огнями окон и размытые огни улицы (боке)."""
-    rng = random.Random(3)
-    img = Image.new("RGB", (W, H))
-    d = ImageDraw.Draw(img)
-    for y in range(H):
-        t = y / H
-        d.line((0, y, W, y), fill=(int(8 + 14 * t), int(10 + 12 * t), int(28 + 22 * t)))
-    x = -40
-    while x < W:
-        bw, bh = rng.randint(110, 230), rng.randint(500, 1300)
-        top = H - 420 - bh
-        d.rectangle((x, top, x + bw, H), fill=(10, 11, 18))
-        for wy in range(top + 30, H - 440, 44):
-            for wx in range(x + 16, x + bw - 20, 30):
-                if rng.random() < 0.33:
-                    c = rng.choice([(255, 210, 130), (255, 236, 190), (180, 210, 255)])
-                    d.rectangle((wx, wy, wx + 14, wy + 22), fill=c)
-        x += bw + rng.randint(4, 30)
-    bokeh = Image.new("RGB", (W, H))
-    bd = ImageDraw.Draw(bokeh)
-    for _ in range(90):
-        r = rng.randint(18, 70)
-        cx, cy = rng.randint(0, W), rng.randint(int(H * 0.55), H)
-        c = rng.choice([(255, 170, 60), (255, 80, 60), (255, 230, 170), (90, 160, 255)])
-        k = rng.uniform(0.35, 0.8)
-        bd.ellipse((cx - r, cy - r, cx + r, cy + r), fill=tuple(int(v * k) for v in c))
-    bokeh = bokeh.filter(ImageFilter.GaussianBlur(14))
-    img = img.filter(ImageFilter.GaussianBlur(2.5))
-
-    img = ImageChops.add(img, bokeh)
-    still = path.with_suffix(".png")
-    img.save(still)
-    still_to_video(still, path)
-
-
-def ensure_generated():
-    GEN_DIR.mkdir(exist_ok=True)
-    if not (GEN_DIR / "тёмный.mp4").exists():
-        make_dark(GEN_DIR / "тёмный.mp4")
-    if not (GEN_DIR / "ночной_город.mp4").exists():
-        make_night_city(GEN_DIR / "ночной_город.mp4")
-    if not (GEN_DIR / "стол_кофе.mp4").exists():
-        make_coffee_table(GEN_DIR / "стол_кофе.mp4")
-
-
 FILL = f"scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H}"
+# Только настоящие ролики из «фоны», на весь экран, без наездов и покачиваний (как в эталоне v3).
 THEMES = {
-    # POV-ходьба: ночная улица от первого лица + покачивание шага и медленный наезд
-    "pov": (BG_DIR / "6044999852_1_tiktok_6a9934d5e66243_74400506.mp4",
-            f"scale={int(W * 1.18)}:{int(H * 1.18)}:force_original_aspect_ratio=increase,"
-            f"crop={W}:{H}:x='(iw-{W})/2+22*sin(2*PI*t*0.95)':y='(ih-{H})/2-30+34*abs(sin(2*PI*t*0.95))',"
-            "eq=brightness=0.04"),
-    # ночной город: огни домов и улицы (в «фоны» подходящего ролика нет — сгенерирован)
-    "ночной_город": (GEN_DIR / "ночной_город.mp4", FILL),
-    "тёмный": (GEN_DIR / "тёмный.mp4", FILL),
-    "стол": (GEN_DIR / "стол_кофе.mp4", FILL),
+    "улица": [BG_DIR / "6044999852_1_tiktok_6a9934d5e66243_74400506.mp4"],     # ночная дорога, машина
+    "ночной_город": [BG_DIR / "792996255_1_tiktok_691210ba3adc99_19024936.mp4"],  # огни города, машины
+    "тёмный": [BG_DIR / "1397611078_1_tiktok_6a0dcc135712c0_09814984.mp4",     # купюры в темноте
+               BG_DIR / "885564788_1_tiktok_69154547596943_43315476.mp4"],     # ночь, самолёты
+    "деньги": [BG_DIR / "1089517915_1_tiktok_699ed9d7692042_54910065.mp4",     # «Волк с Уолл-стрит»
+               BG_DIR / "IMG_18259.mp4"],                                      # стол с купюрами
 }
 
 
@@ -420,7 +290,8 @@ def render(i, rng, tmp):
     dur = round(tsec + PLATE_SEC, 2)
 
     theme = BG_CYCLE[(i - 1) % len(BG_CYCLE)]
-    bg, bg_vf = THEMES[theme]
+    pool = THEMES[theme]
+    bg = pool[((i - 1) // len(BG_CYCLE)) % len(pool)]
     music = MUS_DIR / MUSIC[(i - 1) % len(MUSIC)]
 
     nick = tmp / f"{i}_nick.png"
@@ -434,16 +305,16 @@ def render(i, rng, tmp):
         layers.append(p)
 
     bd = probe_duration(bg)
-    bg_in = ["-ss", f"{rng.uniform(0, bd - dur):.2f}", "-i", str(bg)] if bd > dur + 0.5 \
-        else ["-stream_loop", "-1", "-i", str(bg)]
+    # короткий фон не зацикливаем (был бы скачок), а чуть замедляем до длины ролика
+    slow = max(1.0, (dur + 0.2) / bd)
+    bg_in = ["-ss", f"{rng.uniform(0, bd - dur - 0.2):.2f}" if slow == 1.0 else "0", "-i", str(bg)]
     md = probe_duration(music)
     mus_in = ["-ss", f"{rng.uniform(0, max(0, md - dur - 1)):.2f}"] if md > dur + 1 else ["-stream_loop", "-1"]
 
     ins = [*bg_in, *mus_in, "-i", str(music), "-i", str(nick), "-i", str(plate)]
     for p in layers:
         ins += ["-i", str(p)]
-    dim = {"тёмный": 0.2, "стол": 0.35, "ночной_город": 0.3}.get(theme, DIM)
-    fc = [f"[0:v]{bg_vf},setsar=1,fps={FPS},drawbox=c=black@{dim}:t=fill,trim=0:{dur},setpts=PTS-STARTPTS[v0]"]
+    fc = [f"[0:v]setpts={slow:.3f}*PTS,{FILL},setsar=1,fps={FPS},drawbox=c=black@{DIM}:t=fill,trim=0:{dur},setpts=PTS-STARTPTS[v0]"]
     last = "v0"
     for k, (a, b) in enumerate(times):
         fc.append(f"[{last}][{4 + k}:v]overlay=0:0:enable='between(t,{a},{b - 0.001:.3f})'[v{k + 1}]")
@@ -480,7 +351,6 @@ def main():
     assert len(TEXTS) == len(TITLES) == 21
     rng = random.Random(args.seed)
     OUT_DIR.mkdir(exist_ok=True)
-    ensure_generated()
     nums = range(1, 22) if args.only == "all" else [int(x) for x in args.only.split(",")]
     with tempfile.TemporaryDirectory() as t:
         for i in nums:
