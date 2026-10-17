@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Неделя 19–25 окт: 21 Short в «неделя_19-25» + описания.txt. Вид как v1 из make_5.py:
+"""Единый формат Shorts (как v1 из make_5.py). Меняются только тексты: тексты/<папка>.txt
+→ ролики и описания.txt в <папка>/.
+
+Файл партии: строка «NN | название до 60 символов | текст на экране»; «#» — комментарий.
 
   * фон — ролик из «фоны» на весь экран (горизонтальные обрезаются по бокам), затемнение 55 %;
     по кругу: ночная дорога (POV), ночной город, купюры, тёмный ролик, стол с купюрами;
@@ -11,8 +14,8 @@
   * энергичная музыка из «музыка», громкость выровнена, затухание в конце;
   * 1080×1920, 30 fps, H.264 + AAC, 4,5–6 с (короче — больше досматривают до «ХОЧУ»).
 
-  python3 make_week.py            # все 21
-  python3 make_week.py --only 3,7 # только эти
+  python3 make_shorts.py тексты/неделя_19-25.txt            # все ролики партии
+  python3 make_shorts.py тексты/неделя_19-25.txt --only 3,7 # только эти
 """
 import argparse
 import json
@@ -27,7 +30,7 @@ from PIL import ImageFont
 ROOT = Path(__file__).resolve().parent
 BG_DIR = ROOT / "фоны"
 MUS_DIR = ROOT / "музыка"
-OUT_DIR = ROOT / "неделя_19-25"
+TEXTS_DIR = ROOT / "тексты"
 
 W, H, FPS = 1080, 1920, 30
 DIM = 0.55
@@ -47,30 +50,6 @@ FONT_CANDIDATES = [
 ]
 FONT_PATH, FONT_INDEX, FONT_NAME = next(c for c in FONT_CANDIDATES if Path(c[0]).exists())
 
-TEXTS = [
-    "Смена в Пятёрочке: 2 500 ₽||Бизнес-карты в 8 местах: как неделя таких смен||Без вложений",
-    "Как заработать на РКО с нуля:||1) пишешь мне|2) ИП онлайн за 1-3 дня|3) бизнес-карты за вечер"
-    "|4) ждёшь месяц-полтора|5) забираешь",
-    "Тебе 18+, пашешь больше всех, а денег меньше всех?||Пока ты на смене, другие забирают деньги за РКО",
-    "Курьер: 12 часов на ногах за 3 000 ₽||Бизнес-карты с телефона: в разы больше",
-    "«РКО это развод»||Факты: всё оформлено на тебя, доступ только у тебя, ты ничего не платишь",
-    "Ищешь нишу третий год?||Самый простой вход: РКО",
-    "Официант за эти деньги работает 2 недели||Тут пара вечеров с телефона",
-    "Что нужно для РКО:||18+, паспорт РФ, без долгов, не госслужащий||Всё",
-    "Открыл сам и получил деньги||Позвал друзей: за каждого ещё бонус",
-    "Кассир: месяц за кассой||РКО: пара вечеров с телефона",
-    "Почему деньги не сразу?||Выплата через месяц-полтора||Говорю как есть",
-    "Стипендия 3 000 ₽?||Вот как поднять больше за пару вечеров",
-    "Завод: 5/2 с 8 до 17||РКО: пара вечеров с телефона",
-    "ИП звучит страшно?||Онлайн, бесплатно, 1-3 дня||Подскажу каждый шаг",
-    "Почему платят за РКО:||б@нкам нужны клиенты с ИП||За каждого они платят||Часть твоя",
-    "Просят твои пароли и коды?||Беги||Я не прошу. Доступ только у тебя",
-    "Рефералка: 2к за друга||РКО на себя в 8 местах: в разы больше",
-    "Друг сидит без денег?||Скинь ему это||За каждого друга бонус тебе",
-    "Нужно вкладываться?||Нет||Ни рубля",
-    "3 ошибки новичка в РКО:||1) передать кому-то доступ|2) ждать денег в тот же день|3) идти с долгами",
-    "Откуда деньги за РКО?||Это рекламный бюджет б@нков||Они платят за нового клиента",
-]
 # Концовка: (текст, кегль, y). На экране нет слова «банк» — пишем «б@нков».
 ENDING = [
     ("Пиши ХОЧУ", 80, 834),
@@ -79,29 +58,6 @@ ENDING = [
     ("деньги от б@нков", 44, 1088),
 ]
 
-TITLES = [
-    "Смена в Пятёрочке 2 500 ₽ против пары вечеров с телефона",
-    "Как заработать на РКО с нуля: 5 шагов",
-    "Тебе 18+ и денег вечно нет?",
-    "Курьер 12 часов за 3 000 ₽. Есть вариант проще",
-    "РКО это развод? Три факта",
-    "Ищешь нишу третий год? Начни с этого",
-    "Официант 2 недели или пара вечеров с телефона",
-    "Что нужно для РКО: 4 условия",
-    "Позвал друзей и получил бонус за каждого",
-    "Кассир месяц за кассой. Есть вариант проще",
-    "Почему выплата через месяц-полтора",
-    "Стипендия 3 000 ₽? Вот как поднять больше",
-    "Завод 5/2 или пара вечеров с телефона",
-    "ИП за 1-3 дня онлайн и бесплатно",
-    "Почему за РКО платят деньги",
-    "Просят пароли и коды? Беги",
-    "Рефералка 2к за друга против РКО",
-    "Скинь это другу без денег",
-    "Нужно вкладываться в РКО? Ни рубля",
-    "3 ошибки новичка в РКО",
-    "Откуда берутся деньги за РКО",
-]
 DESC = ("Пиши «ХОЧУ» в ТГ: @markovvv2. Канал с гайдом: markovrko. Доступ только у тебя, вложений ноль. "
         "#рко #заработок #подработка #студент #деньги")
 BANNED = re.compile(r"банк|сч[её]т", re.I)
@@ -230,8 +186,21 @@ def text_sec(text):
 
 # ---------- рендер ----------
 
-def render(i, rng, tmp):
-    text = TEXTS[i - 1]
+def load_batch(path):
+    """[(название, текст)] из файла партии; номера идут по порядку с 01."""
+    rows = []
+    for line in Path(path).read_text(encoding="utf-8").splitlines():
+        if not line.strip() or line.lstrip().startswith("#"):
+            continue
+        num, title, text = (x.strip() for x in line.split(" | ", 2))
+        assert int(num) == len(rows) + 1, f"номера по порядку: {line}"
+        assert len(title) <= 60, f"название длиннее 60 символов: {title}"
+        assert not BANNED.search(title + text), f"«банк»/«счёт» на экране или в названии: {line}"
+        rows.append((title, text))
+    return rows
+
+
+def render(i, text, out_dir, rng, tmp):
     assert not BANNED.search(text), text
     tsec = text_sec(text)
     dur = round(tsec + PLATE_SEC, 1)
@@ -255,7 +224,7 @@ def render(i, rng, tmp):
           f"scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},setsar=1,fps={FPS},"
           f"drawbox=c=black@{DIM}:t=fill,"
           f"ass='{ass_arg}'")
-    out = OUT_DIR / f"{i:02d}.mp4"
+    out = out_dir / f"{i:02d}.mp4"
     subprocess.run(["ffmpeg", "-v", "error", "-y", *bg_in, *mus_in, "-i", str(music),
                     "-map", "0:v:0", "-map", "1:a:0", "-vf", vf,
                     "-af", f"loudnorm=I=-14,afade=t=out:st={dur - 0.6}:d=0.6", "-t", str(dur),
@@ -264,29 +233,31 @@ def render(i, rng, tmp):
     print(f"{out.name}: {dur:.1f} с, фон {theme} ({bg.name}), музыка {music.name}", flush=True)
 
 
-def write_descriptions():
+def write_descriptions(batch, out_dir):
     rows = []
-    for i, title in enumerate(TITLES, 1):
+    for i, (title, _) in enumerate(batch, 1):
         rows += [f"{i:02d} | {title}", DESC, ""]
     text = "\n".join(rows)
     assert not BANNED.search(text)
-    (OUT_DIR / "описания.txt").write_text(text, encoding="utf-8")
+    (out_dir / "описания.txt").write_text(text, encoding="utf-8")
 
 
 def main():
     ap = argparse.ArgumentParser()
+    ap.add_argument("batch", help="файл партии, например тексты/неделя_19-25.txt")
     ap.add_argument("--only", default="all", help="all | 1,5,7")
     ap.add_argument("--seed", type=int, default=19)
     args = ap.parse_args()
-    assert len(TEXTS) == len(TITLES) == 21
+    batch = load_batch(args.batch)
+    out_dir = ROOT / Path(args.batch).stem
     rng = random.Random(args.seed)
-    OUT_DIR.mkdir(exist_ok=True)
-    nums = range(1, 22) if args.only == "all" else [int(x) for x in args.only.split(",")]
+    out_dir.mkdir(exist_ok=True)
+    nums = range(1, len(batch) + 1) if args.only == "all" else [int(x) for x in args.only.split(",")]
     with tempfile.TemporaryDirectory() as t:
         for i in nums:
-            render(i, rng, Path(t))
-    write_descriptions()
-    print("Готово:", OUT_DIR)
+            render(i, batch[i - 1][1], out_dir, rng, Path(t))
+    write_descriptions(batch, out_dir)
+    print("Готово:", out_dir)
 
 
 if __name__ == "__main__":
