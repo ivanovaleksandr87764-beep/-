@@ -38,4 +38,12 @@
 
 - На экране и в описаниях нет слов «банк» и «счёт/счет» (TikTok банит) — если без них никак, «б@нк».
 - Сумм за РКО нигде не писать.
-- В Metricool ничего не ставить.
+
+## Публикация через Metricool (когда пользователь просит)
+
+Бренд `tg.markovrko` (blogId 7424563), часовой пояс Europe/Moscow, сети TikTok + YouTube Shorts.
+По 3 ролика в день в 10:00, 15:00, 18:00 по порядку номеров. Видео — ссылка на файл в Google Drive
+(`https://drive.google.com/file/d/<id>/view`), Metricool сам его забирает. Текст поста:
+`<название>\n<описание>`; `tiktokData.title` и `youtubeData.title` = название, YouTube `type: short`,
+`madeForKids: false`, теги `рко, заработок, подработка, студент, деньги`. Перед постановкой проверить
+`getScheduledPosts`, чтобы не задвоить.
